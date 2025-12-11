@@ -1,0 +1,54 @@
+start: item+
+
+?item: const_decl
+     | top_value
+
+const_decl: NAME "is" value ";" -> const_decl
+top_value: value -> top_value
+?value: dict
+      | const_expr
+      | STRING        -> string_value
+      | NUMBER        -> number_value
+
+dict: "@{" pair* "}" -> dict
+
+pair: NAME "=" value ";" -> pair
+
+const_expr: "!(" expr ")" -> const_expr
+
+
+?expr: sum
+
+?sum: product
+    | sum "+" product   -> add
+    | sum "-" product   -> sub
+
+?product: unary
+        | product "*" unary -> mul
+        | product "/" unary -> div
+
+?unary: atom
+      | "-" unary -> neg
+      | "+" unary -> pos
+
+?atom: NUMBER -> number_atom
+     | NAME -> var
+     | "mod" "(" expr "," expr ")" -> mod_call
+     | "(" expr ")" -> group
+
+
+%import common.WS
+%ignore WS
+
+# Комментарии ":: ..."
+COMMENT: /::[^\n]*/
+%ignore COMMENT
+
+NAME: /[_A-Z][_a-zA-Z0-9]*/
+
+# Числа:
+# [+-]?\d+\.?\d*[eE][+-]?\d+
+# Но допускаем и обычные числа для удобства
+NUMBER: /[+-]?\d+(\.\d+)?([eE][+-]?\d+)?/
+
+STRING: /"([^"\\]|\\.)*"/
